@@ -1,0 +1,33 @@
+services:
+  app:
+    build:
+      context: .
+      target: development
+    depends_on:
+      - postgres
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: commerce_order_test
+      DB_USERNAME: commerce_order
+      DB_PASSWORD: commerce_order
+    volumes:
+      - .:/var/www
+      - ../..:/var/pkg
+      - ${HOME}/.config/composer/auth.json:/home/laravel/.composer/auth.json:ro
+      - ${HOME}/.config/composer/auth.json:/config/composer/auth.json:ro
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: commerce_order_test
+      POSTGRES_USER: commerce_order
+      POSTGRES_PASSWORD: commerce_order
+    ports:
+      - "54221:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
