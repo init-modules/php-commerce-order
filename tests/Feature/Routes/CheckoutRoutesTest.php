@@ -52,6 +52,52 @@ it('registers checkout route', function () {
     expect(route('commerce.order.api.checkout.store', [], false))->toBe('/api/commerce/order/v1/checkout');
 });
 
+it('lists orders for the current actor only', function () {
+    $firstSessionHeaders = orderVisitorSessionHeaders();
+    $secondSessionHeaders = orderVisitorSessionHeaders();
+
+    $firstProduct = createOrderCatalogItem([
+        'name' => 'First Buyer Item',
+        'slug' => 'first-buyer-item',
+        'inventory_mode' => CatalogInventoryMode::UNTRACKED,
+    ]);
+    $secondProduct = createOrderCatalogItem([
+        'name' => 'Second Buyer Item',
+        'slug' => 'second-buyer-item',
+        'inventory_mode' => CatalogInventoryMode::UNTRACKED,
+    ]);
+
+    $this->withHeaders($firstSessionHeaders)
+        ->postJson('/api/commerce/cart/v1/current/items', [
+            'catalog_item_id' => (string) $firstProduct->getKey(),
+            'quantity' => 1,
+        ])
+        ->assertSuccessful();
+
+    $firstOrderNumber = $this->withHeaders($firstSessionHeaders)
+        ->postJson('/api/commerce/order/v1/checkout', [])
+        ->assertSuccessful()
+        ->json('data.number');
+
+    $this->withHeaders($secondSessionHeaders)
+        ->postJson('/api/commerce/cart/v1/current/items', [
+            'catalog_item_id' => (string) $secondProduct->getKey(),
+            'quantity' => 1,
+        ])
+        ->assertSuccessful();
+
+    $this->withHeaders($secondSessionHeaders)
+        ->postJson('/api/commerce/order/v1/checkout', [])
+        ->assertSuccessful();
+
+    $this->withHeaders($firstSessionHeaders)
+        ->getJson('/api/commerce/order/v1/orders')
+        ->assertSuccessful()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.number', $firstOrderNumber)
+        ->assertJsonPath('data.0.items.0.name', 'First Buyer Item');
+});
+
 it('builds cart and order snapshots from pricing rules and allocates stock', function () {
     CatalogPriceRule::query()->create([
         'name' => 'Products 0-5000',
