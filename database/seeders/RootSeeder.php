@@ -13,8 +13,16 @@ class RootSeeder extends PackageSeeder
 
     public function run(): void
     {
+        if (app()->isProduction() || ! config('commerce_order.seed_demo_data', true)) {
+            return;
+        }
+
+        if (class_exists(\Init\Commerce\Catalog\Database\Seeders\RootSeeder::class)) {
+            $this->call(\Init\Commerce\Catalog\Database\Seeders\RootSeeder::class);
+        }
+
         $this->call([
-            //
+            DemoOrderSeeder::class,
         ]);
     }
 }

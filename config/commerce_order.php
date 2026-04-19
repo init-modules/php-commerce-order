@@ -6,6 +6,8 @@ return [
         'order_item' => Init\Commerce\Order\Models\OrderItem::class,
     ],
 
+    'seed_demo_data' => env('COMMERCE_ORDER_SEED_DEMO_DATA', true),
+
     'api' => [
         'enabled' => true,
         'prefix' => 'commerce/order/v1',
