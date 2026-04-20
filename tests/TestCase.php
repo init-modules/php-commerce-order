@@ -25,6 +25,8 @@ abstract class TestCase extends Orchestra
             'schema' => 'public',
             'sslmode' => 'prefer',
         ]);
+        $app['config']->set('app.maintenance.driver', 'file');
+        $app['config']->set('app.maintenance.store', 'array');
         $app['config']->set('cache.default', 'array');
         $app['config']->set('mail.default', 'array');
         $app['config']->set('mail.mailers.array', ['transport' => 'array']);

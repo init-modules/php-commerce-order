@@ -38,14 +38,14 @@ class CurrentOrdersController
 
     private function resolveActor(Request $request): ResolvedActor
     {
-        $actor = $this->requestActorResolver->resolve($request);
+        $actor = $this->requestActorResolver->resolve($request, allowVisitorSession: false);
 
         if ($actor instanceof ResolvedActor) {
             return $actor;
         }
 
         throw ValidationException::withMessages([
-            'actor' => ['Authenticated user or X-Visitor-Session header is required.'],
+            'actor' => ['Authenticated user is required to view orders.'],
         ]);
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Str;
+use Illuminate\Foundation\Auth\User as AuthenticatableUser;
 use Init\Commerce\Catalog\Enums\CatalogInventoryMode;
 use Init\Commerce\Catalog\Enums\CatalogItemStatus;
 use Init\Commerce\Catalog\Enums\CatalogItemType;
@@ -48,6 +49,23 @@ function createOrderDefaultWarehouse(): Warehouse
     ]);
 }
 
+function createOrderTestUser(string $id): AuthenticatableUser
+{
+    $user = new class extends AuthenticatableUser {
+        public $incrementing = false;
+
+        protected $keyType = 'string';
+
+        public function getAuthIdentifierName()
+        {
+            return 'id';
+        }
+    };
+    $user->forceFill(['id' => $id]);
+
+    return $user;
+}
+
 it('registers checkout route', function () {
     expect(route('commerce.order.api.checkout.store', [], false))->toBe('/api/commerce/order/v1/checkout');
 });
@@ -55,6 +73,8 @@ it('registers checkout route', function () {
 it('lists orders for the current actor only', function () {
     $firstSessionHeaders = orderVisitorSessionHeaders();
     $secondSessionHeaders = orderVisitorSessionHeaders();
+    $firstUser = createOrderTestUser('first-order-user');
+    $secondUser = createOrderTestUser('second-order-user');
 
     $firstProduct = createOrderCatalogItem([
         'name' => 'First Buyer Item',
@@ -66,6 +86,8 @@ it('lists orders for the current actor only', function () {
         'slug' => 'second-buyer-item',
         'inventory_mode' => CatalogInventoryMode::UNTRACKED,
     ]);
+
+    $this->actingAs($firstUser);
 
     $this->withHeaders($firstSessionHeaders)
         ->postJson('/api/commerce/cart/v1/current/items', [
@@ -79,6 +101,8 @@ it('lists orders for the current actor only', function () {
         ->assertSuccessful()
         ->json('data.number');
 
+    $this->actingAs($secondUser);
+
     $this->withHeaders($secondSessionHeaders)
         ->postJson('/api/commerce/cart/v1/current/items', [
             'catalog_item_id' => (string) $secondProduct->getKey(),
@@ -90,12 +114,21 @@ it('lists orders for the current actor only', function () {
         ->postJson('/api/commerce/order/v1/checkout', [])
         ->assertSuccessful();
 
+    $this->actingAs($firstUser);
+
     $this->withHeaders($firstSessionHeaders)
         ->getJson('/api/commerce/order/v1/orders')
         ->assertSuccessful()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.number', $firstOrderNumber)
         ->assertJsonPath('data.0.items.0.name', 'First Buyer Item');
+});
+
+it('requires authentication to list orders', function () {
+    $this->withHeaders(orderVisitorSessionHeaders())
+        ->getJson('/api/commerce/order/v1/orders')
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['actor']);
 });
 
 it('builds cart and order snapshots from pricing rules and allocates stock', function () {
