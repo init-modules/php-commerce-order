@@ -35,6 +35,7 @@ class OrderPayload
                     'line_total' => $item->line_total,
                     'pricing_snapshot' => $item->pricing_snapshot,
                     'catalog_snapshot' => $item->catalog_snapshot,
+                    'meta' => $item->meta,
                 ])
                 ->values()
                 ->all(),
