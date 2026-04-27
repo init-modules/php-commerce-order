@@ -1,0 +1,30 @@
+{
+	"repositories": [
+		{
+			"type": "path",
+			"url": "/var/pkg/commerce-foundation/commerce-catalog",
+			"options": {
+				"symlink": true
+			}
+		},
+		{
+			"type": "path",
+			"url": "/var/pkg/commerce-foundation/commerce-cart",
+			"options": {
+				"symlink": true
+			}
+		},
+		{
+			"type": "path",
+			"url": "/var/pkg/commerce-foundation/commerce-stock",
+			"options": {
+				"symlink": true
+			}
+		}
+	],
+	"require": {
+		"init/commerce-catalog": "dev-main as 1.0.0",
+		"init/commerce-cart": "dev-main as 1.0.0",
+		"init/commerce-stock": "dev-main as 1.0.0"
+	}
+}
